@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Orbit OS</title>
-<script src="/scram/scramjet.all.js"></script><script src="/baremux/index.js"></script>
+<script src="config.js"></script><script src="scram/scramjet.all.js"></script><script src="baremux/index.js"></script>
 <style>
 #br.open{display:block;background:#05070d;backdrop-filter:none}.tbtn{font-size:22px;line-height:1;padding:4px 10px!important;opacity:.8!important}
 :root{box-sizing:border-box;--c1:#1c3f8a;--c2:#0a1a3a}
@@ -116,15 +116,16 @@ const SEARCH='https://duckduckgo.com/?q=%s';let sj,conn,frame,ready=false,busy=n
 function norm(i){i=i.trim();try{return new URL(i).toString()}catch(e){}try{const u=new URL('http://'+i);if(u.hostname.includes('.')&&!/\s/.test(i))return u.toString()}catch(e){}return SEARCH.replace('%s',encodeURIComponent(i))}
 function bmsg(t,err){$('bh').style.display='grid';$('bh').innerHTML='<div style="max-width:420px"><div style="font-size:20px;margin-bottom:6px">'+(err?'Could not start the browser':'Browser')+'</div><div style="opacity:.7;word-break:break-word"></div></div>';$('bh').querySelector('div div:last-child').textContent=t}
 function initB(){if(ready)return Promise.resolve();return busy||(busy=(async()=>{
+const BASE=location.pathname.replace(/[^/]*$/,'');const CFG=window.ORBIT_CONFIG||{};
 if(!navigator.serviceWorker)throw new Error('Service workers are unavailable. Open this site over HTTPS (or localhost).');
-if(typeof $scramjetLoadController==='undefined')throw new Error('The Scramjet files did not load from /scram/. Open this page through the Node server (npm start, then http://localhost:8080). It cannot run from a file on disk or from a static host such as GitHub Pages.');
+if(typeof $scramjetLoadController==='undefined')throw new Error('The Scramjet files (scram/ folder) did not load next to this page. Either run the Node server (npm start), or run npm run build:static and upload the whole static folder. Opening the HTML file from disk does not work, and jsDelivr cannot serve web pages.');
 const {ScramjetController}=$scramjetLoadController();
-sj=new ScramjetController({files:{wasm:'/scram/scramjet.wasm.wasm',all:'/scram/scramjet.all.js',sync:'/scram/scramjet.sync.js'}});
+sj=new ScramjetController({prefix:BASE+'scramjet/',files:{wasm:BASE+'scram/scramjet.wasm.wasm',all:BASE+'scram/scramjet.all.js',sync:BASE+'scram/scramjet.sync.js'}});
 await sj.init();
-await navigator.serviceWorker.register('/sw.js');await navigator.serviceWorker.ready;
-conn=new BareMux.BareMuxConnection('/baremux/worker.js');
-const wisp=(location.protocol=='https:'?'wss':'ws')+'://'+location.host+'/wisp/';
-if((await conn.getTransport())!=='/libcurl/index.mjs')await conn.setTransport('/libcurl/index.mjs',[{websocket:wisp}]);
+await navigator.serviceWorker.register(BASE+'sw.js',{scope:BASE});await navigator.serviceWorker.ready;
+conn=new BareMux.BareMuxConnection(BASE+'baremux/worker.js');
+const wisp=CFG.wisp||((location.protocol=='https:'?'wss':'ws')+'://'+location.host+'/wisp/');
+await conn.setTransport(BASE+'libcurl/index.mjs',[{websocket:wisp}]);
 frame=sj.createFrame($('bf'));
 frame.addEventListener('urlchange',e=>{$('bu').value=e.url});
 ready=true})().catch(e=>{busy=null;throw e}))}
