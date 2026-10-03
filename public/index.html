@@ -117,6 +117,7 @@ function norm(i){i=i.trim();try{return new URL(i).toString()}catch(e){}try{const
 function bmsg(t,err){$('bh').style.display='grid';$('bh').innerHTML='<div style="max-width:420px"><div style="font-size:20px;margin-bottom:6px">'+(err?'Could not start the browser':'Browser')+'</div><div style="opacity:.7;word-break:break-word"></div></div>';$('bh').querySelector('div div:last-child').textContent=t}
 function initB(){if(ready)return Promise.resolve();return busy||(busy=(async()=>{
 if(!navigator.serviceWorker)throw new Error('Service workers are unavailable. Open this site over HTTPS (or localhost).');
+if(typeof $scramjetLoadController==='undefined')throw new Error('The Scramjet files did not load from /scram/. Open this page through the Node server (npm start, then http://localhost:8080). It cannot run from a file on disk or from a static host such as GitHub Pages.');
 const {ScramjetController}=$scramjetLoadController();
 sj=new ScramjetController({files:{wasm:'/scram/scramjet.wasm.wasm',all:'/scram/scramjet.all.js',sync:'/scram/scramjet.sync.js'}});
 await sj.init();
